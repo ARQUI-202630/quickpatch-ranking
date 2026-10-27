@@ -5,6 +5,9 @@ using QuickPatch.Ranking.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Logs en JSON con scopes, para Loki (SCRUM-323). Nunca registran el comentario de una calificación (ADR-027).
+builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
+
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 builder.Services.AddApplication();
@@ -16,9 +19,13 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 
 // Probes de k3s (Documento de Infraestructura, sección 5.8).
-// live: el proceso responde; ready: además, sus dependencias (se agregan con cada integración).
+// live: el proceso responde; ready: además, PostgreSQL responde.
+// Ranking no publica endpoints de negocio: la reputación vuelve a Identity por evento (ADR-025, ADR-027).
 app.MapHealthChecks("/health/live", new HealthCheckOptions { Predicate = _ => false });
-app.MapHealthChecks("/health/ready");
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains(QuickPatch.Ranking.Infrastructure.DependencyInjection.ReadyTag),
+});
 
 app.Run();
 
