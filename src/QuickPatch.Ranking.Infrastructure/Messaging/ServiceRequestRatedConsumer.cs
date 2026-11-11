@@ -82,9 +82,7 @@ public sealed partial class ServiceRequestRatedConsumer(
             return true;
         }
 
-        if (envelope?.Data is not { } data || envelope.EventType != EventTypes.ServiceRequestRated || envelope.EventVersion != 1
-            || envelope.EventId == Guid.Empty || envelope.TenantId == Guid.Empty || data.ServiceRequestId == Guid.Empty
-            || data.TechnicianId == Guid.Empty)
+        if (!ServiceRequestRatedContract.IsWellFormed(envelope))
         {
             LogInvalidMessage(logger, null);
             return true;
