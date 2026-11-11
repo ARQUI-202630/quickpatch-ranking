@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 
 using QuickPatch.Ranking.Domain.Reputation;
+using QuickPatch.Transversal.Messaging;
 
 namespace QuickPatch.Ranking.Infrastructure.Persistence;
 
@@ -82,7 +83,7 @@ public sealed class RankingDbContext(DbContextOptions<RankingDbContext> options)
 }
 
 /// <summary>Fila de <c>outbox_events</c> (DD 5.15).</summary>
-public sealed class OutboxEventRecord
+public sealed class OutboxEventRecord : IOutboxRecord
 {
     public Guid Id { get; set; }
 
