@@ -11,7 +11,9 @@ using QuickPatch.Ranking.Application;
 using QuickPatch.Ranking.Application.Abstractions;
 using QuickPatch.Ranking.Infrastructure;
 using QuickPatch.Ranking.Infrastructure.Messaging;
+using QuickPatch.Ranking.Infrastructure.Persistence;
 using QuickPatch.Ranking.UnitTests.Support;
+using QuickPatch.Transversal.Messaging;
 
 namespace QuickPatch.Ranking.UnitTests.Infrastructure;
 
@@ -79,7 +81,7 @@ public class ConsumerAndSetupTests
         var services = new ServiceCollection();
         services.AddInfrastructure(new ConfigurationBuilder().Build());
 
-        Assert.DoesNotContain(services, d => d.ServiceType == typeof(OutboxPublisher));
+        Assert.DoesNotContain(services, d => d.ServiceType == typeof(OutboxPublisher<RankingDbContext, OutboxEventRecord>));
         Assert.DoesNotContain(services, d => d.ServiceType == typeof(ServiceRequestRatedConsumer));
     }
 
@@ -92,7 +94,7 @@ public class ConsumerAndSetupTests
         var services = new ServiceCollection();
         services.AddInfrastructure(configuration);
 
-        Assert.Contains(services, d => d.ServiceType == typeof(OutboxPublisher));
+        Assert.Contains(services, d => d.ServiceType == typeof(OutboxPublisher<RankingDbContext, OutboxEventRecord>));
         Assert.Contains(services, d => d.ServiceType == typeof(ServiceRequestRatedConsumer));
     }
 

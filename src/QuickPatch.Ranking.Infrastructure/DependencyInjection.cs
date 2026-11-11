@@ -8,6 +8,7 @@ using QuickPatch.Ranking.Application.Abstractions;
 using QuickPatch.Ranking.Infrastructure.Messaging;
 using QuickPatch.Ranking.Infrastructure.Options;
 using QuickPatch.Ranking.Infrastructure.Persistence;
+using QuickPatch.Transversal.Messaging;
 
 namespace QuickPatch.Ranking.Infrastructure;
 
@@ -55,8 +56,8 @@ public static class DependencyInjection
                 AutoOffsetReset = AutoOffsetReset.Earliest,
             }).Build());
 
-            services.AddSingleton<OutboxPublisher>();
-            services.AddHostedService(sp => sp.GetRequiredService<OutboxPublisher>());
+            services.AddSingleton<OutboxPublisher<RankingDbContext, OutboxEventRecord>>();
+            services.AddHostedService(sp => sp.GetRequiredService<OutboxPublisher<RankingDbContext, OutboxEventRecord>>());
             services.AddSingleton<ServiceRequestRatedConsumer>();
             services.AddHostedService(sp => sp.GetRequiredService<ServiceRequestRatedConsumer>());
         }
