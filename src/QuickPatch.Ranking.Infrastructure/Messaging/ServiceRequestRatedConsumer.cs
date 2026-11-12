@@ -3,11 +3,11 @@ using System.Text.Json;
 using Confluent.Kafka;
 
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 using QuickPatch.Ranking.Application.Events;
 using QuickPatch.Ranking.Application.Reputation;
+using QuickPatch.Transversal.Messaging;
 
 namespace QuickPatch.Ranking.Infrastructure.Messaging;
 
@@ -19,54 +19,11 @@ namespace QuickPatch.Ranking.Infrastructure.Messaging;
 public sealed partial class ServiceRequestRatedConsumer(
     IServiceScopeFactory scopes,
     IConsumer<string, string> consumer,
-    ILogger<ServiceRequestRatedConsumer> logger) : BackgroundService
+    ILogger<ServiceRequestRatedConsumer> logger)
+    : KafkaConsumerService(consumer, [EventTypes.ServiceRequestRated], logger)
 {
-    protected override Task ExecuteAsync(CancellationToken stoppingToken) =>
-        Task.Factory.StartNew(() => ConsumeLoopAsync(stoppingToken), stoppingToken, TaskCreationOptions.LongRunning, TaskScheduler.Default).Unwrap();
-
-    private async Task ConsumeLoopAsync(CancellationToken stoppingToken)
-    {
-        consumer.Subscribe(EventTypes.ServiceRequestRated);
-        try
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                ConsumeResult<string, string>? result;
-                try
-                {
-                    result = consumer.Consume(TimeSpan.FromSeconds(1));
-                }
-                catch (ConsumeException ex) when (!ex.Error.IsFatal)
-                {
-                    LogConsumeFailed(logger, ex.Error.Reason, ex);
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
-                    continue;
-                }
-
-                if (result is null)
-                {
-                    continue;
-                }
-
-                if (await TryProcessAsync(result.Message.Value, stoppingToken))
-                {
-                    consumer.Commit(result);
-                }
-                else
-                {
-                    consumer.Seek(result.TopicPartitionOffset);
-                    await Task.Delay(TimeSpan.FromSeconds(2), stoppingToken);
-                }
-            }
-        }
-        catch (OperationCanceledException)
-        {
-        }
-        finally
-        {
-            consumer.Close();
-        }
-    }
+    protected override Task<bool> ProcessAsync(ConsumeResult<string, string> result, CancellationToken cancellationToken) =>
+        TryProcessAsync(result.Message.Value, cancellationToken);
 
     /// <summary>Aplica un mensaje; devuelve false si hay que reintentarlo.</summary>
     public async Task<bool> TryProcessAsync(string value, CancellationToken cancellationToken)
@@ -105,9 +62,6 @@ public sealed partial class ServiceRequestRatedConsumer(
 
     [LoggerMessage(Level = LogLevel.Error, Message = "Mensaje de service-request.rated que no cumple el contrato; se descarta.")]
     private static partial void LogInvalidMessage(ILogger logger, Exception? exception);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "No se pudo leer service-request.rated ({Reason}); se reintentará.")]
-    private static partial void LogConsumeFailed(ILogger logger, string reason, Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Falló el procesamiento del evento {EventId}; se reintentará.")]
     private static partial void LogProcessingFailed(ILogger logger, Guid eventId, Exception exception);
