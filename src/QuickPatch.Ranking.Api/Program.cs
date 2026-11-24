@@ -2,11 +2,12 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 using QuickPatch.Ranking.Application;
 using QuickPatch.Ranking.Infrastructure;
+using QuickPatch.Transversal.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Logs en JSON con scopes, para Loki (SCRUM-323). Nunca registran el comentario de una calificación (ADR-027).
-builder.Logging.AddJsonConsole(options => options.IncludeScopes = true);
+builder.Logging.AddQuickPatchJsonConsole();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();

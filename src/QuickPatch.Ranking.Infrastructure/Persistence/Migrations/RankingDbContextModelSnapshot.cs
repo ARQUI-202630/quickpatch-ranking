@@ -99,7 +99,7 @@ namespace QuickPatch.Ranking.Infrastructure.Persistence.Migrations
                         });
                 });
 
-            modelBuilder.Entity("QuickPatch.Ranking.Infrastructure.Persistence.OutboxEventRecord", b =>
+            modelBuilder.Entity("QuickPatch.Transversal.Messaging.OutboxEventRecord", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uuid")
@@ -145,7 +145,7 @@ namespace QuickPatch.Ranking.Infrastructure.Persistence.Migrations
                     b.ToTable("outbox_events", (string)null);
                 });
 
-            modelBuilder.Entity("QuickPatch.Ranking.Infrastructure.Persistence.ProcessedEventRecord", b =>
+            modelBuilder.Entity("QuickPatch.Transversal.Messaging.ProcessedEventRecord", b =>
                 {
                     b.Property<Guid>("EventId")
                         .HasColumnType("uuid")
